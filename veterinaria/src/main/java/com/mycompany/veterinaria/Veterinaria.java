@@ -80,6 +80,15 @@ public class Veterinaria {
         });
         panel.add(btnAgregar);
 
+        //boton de eliminar
+        JButton btnEliminar = new JButton("Eliminar Mascota");
+        btnEliminar.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                eliminarMascota();
+            }
+        });
+        panel.add(btnEliminar);
+
         // Panel de tabla
         JScrollPane scrollPane = new JScrollPane();
         frame.getContentPane().add(scrollPane, BorderLayout.CENTER);
@@ -97,6 +106,8 @@ public class Veterinaria {
         
     }
 
+    // Método para agregar una mascota
+
     private void agregarMascota() {
         String nombre = txtNombre.getText();
         String especie = txtEspecie.getText();
@@ -112,6 +123,16 @@ public class Veterinaria {
             limpiarFormulario();
         }} catch (Exception e) {
             JOptionPane.showMessageDialog(frame, "Todos los campos son obligatorios", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // Método para eliminar una mascota
+    private void eliminarMascota() {
+        int filaSeleccionada = table.getSelectedRow();
+        if (filaSeleccionada != -1) {
+            String nombre = (String) tableModel.getValueAt(filaSeleccionada, 0);
+            ArchivoPlano.eliminarDeArchivo(nombre);
+            tableModel.removeRow(filaSeleccionada);
         }
     }
 

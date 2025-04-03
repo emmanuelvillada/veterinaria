@@ -1,1 +1,2 @@
 prince,perro,pincher
+paco,mono,rojo

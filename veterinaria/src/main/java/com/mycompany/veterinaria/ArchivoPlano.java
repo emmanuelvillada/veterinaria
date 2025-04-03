@@ -54,10 +54,10 @@ public class ArchivoPlano {
     
     // Método para eliminar un estudiante del archivo por documento
     public static void eliminarDeArchivo(String nombre) {
-        List<Mascota> listaMascotas = cargarDesdeArchivo();  // Cargar los estudiantes desde el archivo
+        List<Mascota> listaMascotas = cargarDesdeArchivo();  // Cargar la lista desde el archivo
         boolean eliminado = false;
 
-        // Buscar y eliminar el estudiante con el documento especificado
+        // Buscar y eliminar la mascota por nombre
         for (Mascota mascota : listaMascotas) {
             if (mascota.getNombre() == nombre) {
                 listaMascotas.remove(mascota);
@@ -67,7 +67,7 @@ public class ArchivoPlano {
         }
 
         if (eliminado) {
-            // Si se eliminó el estudiante, guardar los datos actualizados en el archivo
+            // Si se eliminó la mascota, guardar la lista actualizada en el archivo
             guardarEnArchivo(listaMascotas);
             System.out.println("Mascota: " + nombre + " eliminada correctamente.");
         } else {
