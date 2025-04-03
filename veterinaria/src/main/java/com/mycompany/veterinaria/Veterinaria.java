@@ -1,138 +1,128 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- */
-
 package com.mycompany.veterinaria;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-
-/**
- *
- * @author DELL
- */
-
 public class Veterinaria {
     private JFrame frame;
-    private JTextField txtNombre;
-    private JTextField txtEspecie;
-    private JTextField txtRaza;
+    private JTextField txtNombre, txtEspecie, txtRaza;
     private JTable table;
     private DefaultTableModel tableModel;
     private List<Mascota> listaMascotas;
+    private static final String ARCHIVO = "mascotas.txt";
 
     public static void main(String[] args) {
-        
-            
-                Veterinaria window = new Veterinaria();
-                window.frame.setVisible(true);
-            
-       
+        Veterinaria window = new Veterinaria();
+        window.frame.setVisible(true);
     }
 
     public Veterinaria() {
-        listaMascotas = new ArrayList<>();
+        listaMascotas = cargarDesdeArchivo();
         initialize();
     }
 
     private void initialize() {
-        frame = new JFrame();
-        frame.setBounds(100, 100, 600, 400);
+        frame = new JFrame("Sistema de Gestión Veterinaria");
+        frame.setBounds(100, 100, 800, 600);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.getContentPane().setLayout(new BorderLayout());
+        frame.getContentPane().setLayout(new BorderLayout(10, 10));
 
-        // Panel de formulario
-        JPanel panel = new JPanel();
-        frame.getContentPane().add(panel, BorderLayout.NORTH);
-        panel.setLayout(new GridLayout(4, 2));
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        frame.getContentPane().add(mainPanel);
 
-        JLabel lblNombre = new JLabel("Nombre");
-        panel.add(lblNombre);
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        formPanel.setBorder(BorderFactory.createTitledBorder("Datos de la Mascota"));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(5, 5, 5, 5);
 
-        txtNombre = new JTextField();
-        panel.add(txtNombre);
-        txtNombre.setColumns(10);
-
-        JLabel lblEspecie = new JLabel("Especie");
-        panel.add(lblEspecie);
-
-        txtEspecie = new JTextField();
-        panel.add(txtEspecie);
-        txtEspecie.setColumns(10);
-
-        JLabel lblRaza = new JLabel("Raza");
-        panel.add(lblRaza);
-
-        txtRaza = new JTextField();
-        panel.add(txtRaza);
-        txtRaza.setColumns(10);
-
+        txtNombre = new JTextField(15);
+        txtEspecie = new JTextField(15);
+        txtRaza = new JTextField(15);
         JButton btnAgregar = new JButton("Agregar Mascota");
-        btnAgregar.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                agregarMascota();
-            }
-        });
-        panel.add(btnAgregar);
-
-        //boton de eliminar
         JButton btnEliminar = new JButton("Eliminar Mascota");
-        btnEliminar.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                eliminarMascota();
-            }
-        });
-        panel.add(btnEliminar);
+        JButton btnActualizar = new JButton("Actualizar Mascota");
 
-        // Panel de tabla
-        JScrollPane scrollPane = new JScrollPane();
-        frame.getContentPane().add(scrollPane, BorderLayout.CENTER);
+        addFormComponent(formPanel, new JLabel("Nombre:"), txtNombre, gbc, 0);
+        addFormComponent(formPanel, new JLabel("Especie:"), txtEspecie, gbc, 1);
+        addFormComponent(formPanel, new JLabel("Raza:"), txtRaza, gbc, 2);
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(btnAgregar);
+        buttonPanel.add(btnEliminar);
+        buttonPanel.add(btnActualizar);
+        gbc.gridy = 3;
+        gbc.gridwidth = 2;
+        formPanel.add(buttonPanel, gbc);
+        mainPanel.add(formPanel, BorderLayout.WEST);
 
         tableModel = new DefaultTableModel(new Object[][] {}, new String[] {"Nombre", "Especie", "Raza"});
         table = new JTable(tableModel);
-        scrollPane.setViewportView(table);
+        JScrollPane scrollPane = new JScrollPane(table);
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
 
-        // Cargar datos desde el archivo plano
-        listaMascotas = ArchivoPlano.cargarDesdeArchivo();
-        for (Mascota mascota : listaMascotas) {
-            tableModel.addRow(new Object[] {mascota.getNombre(), mascota.getEspecie(), mascota.getRaza()});
-        }
+        btnAgregar.addActionListener(e -> agregarMascota());
+        btnEliminar.addActionListener(e -> eliminarMascota());
+        btnActualizar.addActionListener(e -> actualizarMascota());
 
-        
+        cargarDatosEnTabla();
     }
 
-    // Método para agregar una mascota
+    private void addFormComponent(JPanel panel, JLabel label, JTextField field, GridBagConstraints gbc, int y) {
+        gbc.gridy = y;
+        gbc.gridx = 0;
+        panel.add(label, gbc);
+        gbc.gridx = 1;
+        panel.add(field, gbc);
+    }
 
     private void agregarMascota() {
-        String nombre = txtNombre.getText();
-        String especie = txtEspecie.getText();
-        String raza = txtRaza.getText();
-        
-        try{
+        String nombre = txtNombre.getText().trim();
+        String especie = txtEspecie.getText().trim();
+        String raza = txtRaza.getText().trim();
 
-        if (!nombre.isEmpty() && !especie.isEmpty() && !raza.isEmpty()) {
-            Mascota nuevaMascota = new Mascota(nombre, especie, raza);
-            listaMascotas.add(nuevaMascota);
-            ArchivoPlano.guardarEnArchivo(listaMascotas);
-            tableModel.addRow(new Object[] {nombre, especie, raza});
-            limpiarFormulario();
-        }} catch (Exception e) {
+        if (nombre.isEmpty() || especie.isEmpty() || raza.isEmpty()) {
             JOptionPane.showMessageDialog(frame, "Todos los campos son obligatorios", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
         }
+
+        listaMascotas.add(new Mascota(nombre, especie, raza));
+        guardarEnArchivo();
+        cargarDatosEnTabla();
+        limpiarFormulario();
     }
 
-    // Método para eliminar una mascota
     private void eliminarMascota() {
         int filaSeleccionada = table.getSelectedRow();
         if (filaSeleccionada != -1) {
-            String nombre = (String) tableModel.getValueAt(filaSeleccionada, 0);
-            ArchivoPlano.eliminarDeArchivo(nombre);
-            tableModel.removeRow(filaSeleccionada);
+            listaMascotas.remove(filaSeleccionada);
+            guardarEnArchivo();
+            cargarDatosEnTabla();
+        } else {
+            JOptionPane.showMessageDialog(frame, "Seleccione una mascota para eliminar", "Aviso", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    private void actualizarMascota() {
+        int filaSeleccionada = table.getSelectedRow();
+        if (filaSeleccionada != -1) {
+            String especie = txtEspecie.getText().trim();
+            String raza = txtRaza.getText().trim();
+            if (especie.isEmpty() || raza.isEmpty()) {
+                JOptionPane.showMessageDialog(frame, "Los campos especie y raza son obligatorios", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            listaMascotas.get(filaSeleccionada).setEspecie(especie);
+            listaMascotas.get(filaSeleccionada).setRaza(raza);
+            guardarEnArchivo();
+            cargarDatosEnTabla();
+            limpiarFormulario();
+        } else {
+            JOptionPane.showMessageDialog(frame, "Seleccione una mascota para actualizar", "Aviso", JOptionPane.WARNING_MESSAGE);
         }
     }
 
@@ -141,5 +131,60 @@ public class Veterinaria {
         txtEspecie.setText("");
         txtRaza.setText("");
     }
-}
 
+    //cargar datos en la tabla
+
+    private void cargarDatosEnTabla() {
+        tableModel.setRowCount(0);
+        for (Mascota mascota : listaMascotas) {
+            tableModel.addRow(new Object[] {mascota.getNombre(), mascota.getEspecie(), mascota.getRaza()});
+        }
+    }
+
+    //guardar en archivo
+
+    private void guardarEnArchivo() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(ARCHIVO))) {
+            for (Mascota m : listaMascotas) {
+                writer.write(m.getNombre() + "," + m.getEspecie() + "," + m.getRaza());
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    //metodo para cargar
+
+    private List<Mascota> cargarDesdeArchivo() {
+        List<Mascota> mascotas = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(ARCHIVO))) {
+            String linea;
+            while ((linea = reader.readLine()) != null) {
+                String[] datos = linea.split(",");
+                if (datos.length == 3) {
+                    mascotas.add(new Mascota(datos[0], datos[1], datos[2]));
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return mascotas;
+    }
+
+    private static class Mascota {
+        private String nombre, especie, raza;
+
+        public Mascota(String nombre, String especie, String raza) {
+            this.nombre = nombre;
+            this.especie = especie;
+            this.raza = raza;
+        }
+
+        public String getNombre() { return nombre; }
+        public String getEspecie() { return especie; }
+        public String getRaza() { return raza; }
+        public void setEspecie(String especie) { this.especie = especie; }
+        public void setRaza(String raza) { this.raza = raza; }
+    }
+}
