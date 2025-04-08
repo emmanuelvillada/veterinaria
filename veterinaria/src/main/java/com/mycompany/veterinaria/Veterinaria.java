@@ -20,7 +20,7 @@ public class Veterinaria {
     }
 
     public Veterinaria() {
-        listaMascotas = cargarDesdeArchivo();
+        listaMascotas = ArchivoPlano.cargarDesdeArchivo();
         initialize();
     }
 
@@ -67,7 +67,7 @@ public class Veterinaria {
 
         btnAgregar.addActionListener(e -> agregarMascota());
         btnEliminar.addActionListener(e -> eliminarMascota());
-        btnActualizar.addActionListener(e -> actualizarMascota());
+        btnActualizar.addActionListener(e ->actualizarMascota());
 
         cargarDatosEnTabla();
     }
@@ -91,7 +91,7 @@ public class Veterinaria {
         }
 
         listaMascotas.add(new Mascota(nombre, especie, raza));
-        guardarEnArchivo();
+        ArchivoPlano.guardarEnArchivo(listaMascotas);
         cargarDatosEnTabla();
         limpiarFormulario();
     }
@@ -100,7 +100,7 @@ public class Veterinaria {
         int filaSeleccionada = table.getSelectedRow();
         if (filaSeleccionada != -1) {
             listaMascotas.remove(filaSeleccionada);
-            guardarEnArchivo();
+            ArchivoPlano.guardarEnArchivo(listaMascotas);
             cargarDatosEnTabla();
         } else {
             JOptionPane.showMessageDialog(frame, "Seleccione una mascota para eliminar", "Aviso", JOptionPane.WARNING_MESSAGE);
@@ -118,7 +118,7 @@ public class Veterinaria {
             }
             listaMascotas.get(filaSeleccionada).setEspecie(especie);
             listaMascotas.get(filaSeleccionada).setRaza(raza);
-            guardarEnArchivo();
+            ArchivoPlano.guardarEnArchivo(listaMascotas);
             cargarDatosEnTabla();
             limpiarFormulario();
         } else {
@@ -141,50 +141,5 @@ public class Veterinaria {
         }
     }
 
-    //guardar en archivo
-
-    private void guardarEnArchivo() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(ARCHIVO))) {
-            for (Mascota m : listaMascotas) {
-                writer.write(m.getNombre() + "," + m.getEspecie() + "," + m.getRaza());
-                writer.newLine();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    //metodo para cargar
-
-    private List<Mascota> cargarDesdeArchivo() {
-        List<Mascota> mascotas = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader(ARCHIVO))) {
-            String linea;
-            while ((linea = reader.readLine()) != null) {
-                String[] datos = linea.split(",");
-                if (datos.length == 3) {
-                    mascotas.add(new Mascota(datos[0], datos[1], datos[2]));
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return mascotas;
-    }
-
-    private static class Mascota {
-        private String nombre, especie, raza;
-
-        public Mascota(String nombre, String especie, String raza) {
-            this.nombre = nombre;
-            this.especie = especie;
-            this.raza = raza;
-        }
-
-        public String getNombre() { return nombre; }
-        public String getEspecie() { return especie; }
-        public String getRaza() { return raza; }
-        public void setEspecie(String especie) { this.especie = especie; }
-        public void setRaza(String raza) { this.raza = raza; }
-    }
 }
+
