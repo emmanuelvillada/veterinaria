@@ -25,10 +25,27 @@ public class Veterinaria {
     }
 
     private void initialize() {
-        frame = new JFrame("Sistema de Gestión Veterinaria");
+        try {
+            frame.setIconImage(new ImageIcon(getClass().getResource("/../resources/gato.jpg")).getImage());
+        } catch (Exception e) {
+            System.err.println("No se pudo cargar el icono de la ventana");
+        }
+
+        frame = new JFrame("La Mascota Feliz - Veterinaria");
         frame.setBounds(100, 100, 800, 600);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.getContentPane().setLayout(new BorderLayout(10, 10));
+
+         // Panel superior con logo y título
+    JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+    headerPanel.setBackground(new Color(173, 216, 230)); // Color celeste claro
+    
+    // Cargar logo (asegúrate de tener el archivo en src/main/resources)
+    ImageIcon logoIcon = cargarImagen("/../resources/gato.jpg");
+    if (logoIcon != null) {
+        JLabel logoLabel = new JLabel(logoIcon);
+        headerPanel.add(logoLabel);
+    }
 
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -113,7 +130,9 @@ public class Veterinaria {
             String especie = txtEspecie.getText().trim();
             String raza = txtRaza.getText().trim();
             if (especie.isEmpty() || raza.isEmpty()) {
-                JOptionPane.showMessageDialog(frame, "Los campos especie y raza son obligatorios", "Error", JOptionPane.ERROR_MESSAGE);
+                txtNombre.setText(listaMascotas.get(filaSeleccionada).getNombre());
+                txtEspecie.setText(listaMascotas.get(filaSeleccionada).getEspecie());
+                txtRaza.setText(listaMascotas.get(filaSeleccionada).getRaza());
                 return;
             }
             listaMascotas.get(filaSeleccionada).setEspecie(especie);
@@ -140,6 +159,17 @@ public class Veterinaria {
             tableModel.addRow(new Object[] {mascota.getNombre(), mascota.getEspecie(), mascota.getRaza()});
         }
     }
+    private ImageIcon cargarImagen(String ruta) {
+        try {
+            return new ImageIcon(new ImageIcon(getClass().getResource(ruta))
+                    .getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH));
+        } catch (Exception e) {
+            System.err.println("Error al cargar la imagen: " + e.getMessage());
+            return null;
+        }
+    }
+    
 
 }
+
 
