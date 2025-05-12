@@ -42,6 +42,8 @@ public class Veterinaria {
         tabbedPane.addTab("Mascotas", crearPanelMascotas());
         tabbedPane.addTab("Clientes", crearPanelClientes());
         tabbedPane.addTab("Veterinarios", crearPanelVeterinario());
+        tabbedPane.addTab("Citas", crearPanelCitas());
+
 
         frame.add(tabbedPane, BorderLayout.CENTER);
     }
@@ -340,7 +342,105 @@ private void cargarDatosVeterinarios() {
     txtEspecialidad.setText("");
     txtTelefonoVeterinario.setText("");
 }
-//panel para recepcionista
-// TODO: implementar panel de veterinario y recepcionista
+//Panel para citas
+private JPanel crearPanelCitas() {
+    JPanel panel = new JPanel(new BorderLayout());
+
+    // Tabla
+    DefaultTableModel modelo = new DefaultTableModel(new String[]{"ID", "Fecha", "Hora", "Motivo", "ID Mascota", "ID Veterinario"}, 0);
+    JTable tabla = new JTable(modelo);
+    JScrollPane scroll = new JScrollPane(tabla);
+    panel.add(scroll, BorderLayout.CENTER);
+
+    // Panel de formulario
+    JPanel formulario = new JPanel(new GridLayout(6, 2, 5, 5));
+    JTextField txtFecha = new JTextField();
+    JTextField txtHora = new JTextField();
+    JTextField txtMotivo = new JTextField();
+    JTextField txtIdMascota = new JTextField();
+    JTextField txtIdVeterinario = new JTextField();
+
+    formulario.add(new JLabel("Fecha (YYYY-MM-DD):"));
+    formulario.add(txtFecha);
+    formulario.add(new JLabel("Hora (HH:MM):"));
+    formulario.add(txtHora);
+    formulario.add(new JLabel("Motivo:"));
+    formulario.add(txtMotivo);
+    formulario.add(new JLabel("ID Mascota:"));
+    formulario.add(txtIdMascota);
+    formulario.add(new JLabel("ID Veterinario:"));
+    formulario.add(txtIdVeterinario);
+
+    JButton btnAgregar = new JButton("Agregar");
+    JButton btnActualizar = new JButton("Actualizar");
+    JButton btnEliminar = new JButton("Eliminar");
+
+    formulario.add(btnAgregar);
+    formulario.add(btnActualizar);
+    formulario.add(btnEliminar);
+
+    panel.add(formulario, BorderLayout.SOUTH);
+
+    // DAO
+    CitaDAO dao = new CitaDAO();
+
+    // Cargar datos
+    Runnable cargarDatos = () -> {
+        modelo.setRowCount(0);
+        for (Cita c : dao.obtenerTodas()) {
+            modelo.addRow(new Object[]{
+                c.getId(), c.getFecha(), c.getHora(), c.getMotivo(), c.getIdMascota(), c.getIdVeterinario()
+            });
+        }
+    };
+    cargarDatos.run();
+
+    // Evento tabla: seleccionar fila
+    tabla.getSelectionModel().addListSelectionListener(e -> {
+        int fila = tabla.getSelectedRow();
+        if (fila >= 0) {
+            txtFecha.setText(modelo.getValueAt(fila, 1).toString());
+            txtHora.setText(modelo.getValueAt(fila, 2).toString());
+            txtMotivo.setText(modelo.getValueAt(fila, 3).toString());
+            txtIdMascota.setText(modelo.getValueAt(fila, 4).toString());
+            txtIdVeterinario.setText(modelo.getValueAt(fila, 5).toString());
+        }
+    });
+
+    // Eventos botones
+    btnAgregar.addActionListener(e -> {
+        Cita c = new Cita(
+            txtFecha.getText(), txtHora.getText(), txtMotivo.getText(),
+            Integer.parseInt(txtIdMascota.getText()), Integer.parseInt(txtIdVeterinario.getText())
+        );
+        dao.insertar(c);
+        cargarDatos.run();
+    });
+
+    btnActualizar.addActionListener(e -> {
+        int fila = tabla.getSelectedRow();
+        if (fila >= 0) {
+            int id = (int) modelo.getValueAt(fila, 0);
+            Cita c = new Cita(
+                id, txtFecha.getText(), txtHora.getText(), txtMotivo.getText(),
+                Integer.parseInt(txtIdMascota.getText()), Integer.parseInt(txtIdVeterinario.getText())
+            );
+            dao.actualizar(c);
+            cargarDatos.run();
+        }
+    });
+
+    btnEliminar.addActionListener(e -> {
+        int fila = tabla.getSelectedRow();
+        if (fila >= 0) {
+            int id = (int) modelo.getValueAt(fila, 0);
+            dao.eliminar(id);
+            cargarDatos.run();
+        }
+    });
+
+    return panel;
+}
+
 
 }
