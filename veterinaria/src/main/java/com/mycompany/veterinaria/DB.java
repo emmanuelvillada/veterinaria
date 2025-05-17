@@ -10,6 +10,11 @@ public class DB {
     private static final String CLAVE = "emmanuelc1903";
 
     public static Connection conectar() throws SQLException {
-        return DriverManager.getConnection(URL, USUARIO, CLAVE);
+        try{
+            return DriverManager.getConnection(URL, USUARIO, CLAVE);
+        } catch (SQLException e) {
+            throw new SQLException("Error al conectar con la base de datos", e);
+        }
+        
 }
 }

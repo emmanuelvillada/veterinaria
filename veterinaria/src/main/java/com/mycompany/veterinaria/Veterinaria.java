@@ -43,6 +43,9 @@ public class Veterinaria {
         tabbedPane.addTab("Clientes", crearPanelClientes());
         tabbedPane.addTab("Veterinarios", crearPanelVeterinario());
         tabbedPane.addTab("Citas", crearPanelCitas());
+        tabbedPane.addTab("Historias Clínicas", crearPanelHistorias());
+        tabbedPane.addTab("Tratamientos", crearPanelTratamientos());
+        tabbedPane.setPreferredSize(new Dimension(800, 500));
 
 
         frame.add(tabbedPane, BorderLayout.CENTER);
@@ -441,6 +444,184 @@ private JPanel crearPanelCitas() {
 
     return panel;
 }
+//panel para historia clinica
+
+private JPanel crearPanelHistorias() {
+    JPanel panel = new JPanel(new BorderLayout());
+
+    // Tabla
+    DefaultTableModel modelo = new DefaultTableModel(new String[]{"ID", "Fecha", "Diagnóstico", "Tratamiento", "ID Mascota"}, 0);
+    JTable tabla = new JTable(modelo);
+    JScrollPane scroll = new JScrollPane(tabla);
+    panel.add(scroll, BorderLayout.CENTER);
+
+    // Panel de formulario
+    JPanel formulario = new JPanel(new GridLayout(5, 2, 5, 5));
+    JTextField txtFecha = new JTextField();
+    JTextField txtDiagnostico = new JTextField();
+    JTextField txtTratamiento = new JTextField();
+    JTextField txtIdMascota = new JTextField();
+
+    formulario.add(new JLabel("Fecha (YYYY-MM-DD):"));
+    formulario.add(txtFecha);
+    formulario.add(new JLabel("Diagnóstico:"));
+    formulario.add(txtDiagnostico);
+    formulario.add(new JLabel("Tratamiento:"));
+    formulario.add(txtTratamiento);
+    formulario.add(new JLabel("ID Mascota:"));
+    formulario.add(txtIdMascota);
+
+    JButton btnAgregar = new JButton("Agregar");
+    JButton btnActualizar = new JButton("Actualizar");
+    JButton btnEliminar = new JButton("Eliminar");
+
+    formulario.add(btnAgregar);
+    formulario.add(btnActualizar);
+    formulario.add(btnEliminar);
+
+    panel.add(formulario, BorderLayout.SOUTH);
+
+    // DAO
+    IHistoriaClinicaDAO dao = new HistoriaClinicaDAO();
+
+    // Cargar datos
+    Runnable cargarDatos = () -> {
+        modelo.setRowCount(0);
+        for (HistoriaCLinica h : dao.obtenerHistoriasClinicas()) {
+            modelo.addRow(new Object[]{
+                h.getId(), h.getFecha(), h.getDiagnostico(), h.getTratamiento(), h.getIdMascota()
+            });
+        }
+    };
+    cargarDatos.run();
+
+    // Evento tabla
+    tabla.getSelectionModel().addListSelectionListener(e -> {
+        int fila = tabla.getSelectedRow();
+        if (fila >= 0) {
+            txtFecha.setText(modelo.getValueAt(fila, 1).toString());
+            txtDiagnostico.setText(modelo.getValueAt(fila, 2).toString());
+            txtTratamiento.setText(modelo.getValueAt(fila, 3).toString());
+            txtIdMascota.setText(modelo.getValueAt(fila, 4).toString());
+        }
+    });
+
+    // Eventos botones
+    btnAgregar.addActionListener(e -> {
+        HistoriaCLinica h = new HistoriaCLinica(
+            txtFecha.getText(), txtDiagnostico.getText(), txtTratamiento.getText(),
+            Integer.parseInt(txtIdMascota.getText())
+        );
+        dao.agregarHistoriaClinica(h);
+        cargarDatos.run();
+    });
+
+    btnActualizar.addActionListener(e -> {
+        int fila = tabla.getSelectedRow();
+        if (fila >= 0) {
+            int id = (int) modelo.getValueAt(fila, 0);
+            HistoriaCLinica h = new HistoriaCLinica(
+                id, txtFecha.getText(), txtDiagnostico.getText(), txtTratamiento.getText(),
+                Integer.parseInt(txtIdMascota.getText())
+            );
+            dao.actualizarHistoriaClinica(h);
+            cargarDatos.run();
+        }
+    });
+
+    btnEliminar.addActionListener(e -> {
+        int fila = tabla.getSelectedRow();
+        if (fila >= 0) {
+            int id = (int) modelo.getValueAt(fila, 0);
+            dao.eliminarHistoriaClinica(id);
+            cargarDatos.run();
+        }
+    });
+
+    return panel;
+}
+// Pnael para tratamiento
+
+private JPanel crearPanelTratamientos() {
+    JPanel panel = new JPanel(new BorderLayout());
+
+    // Tabla
+    DefaultTableModel modelo = new DefaultTableModel(new String[]{"ID", "Nombre", "Costo"}, 0);
+    JTable tabla = new JTable(modelo);
+    JScrollPane scroll = new JScrollPane(tabla);
+    panel.add(scroll, BorderLayout.CENTER);
+
+    // Formulario
+    JPanel formulario = new JPanel(new GridLayout(3, 2, 5, 5));
+    JTextField txtNombre = new JTextField();
+    JTextField txtCosto = new JTextField();
+
+    formulario.add(new JLabel("Nombre:"));
+    formulario.add(txtNombre);
+    formulario.add(new JLabel("Costo:"));
+    formulario.add(txtCosto);
+
+    JButton btnAgregar = new JButton("Agregar");
+    JButton btnActualizar = new JButton("Actualizar");
+    JButton btnEliminar = new JButton("Eliminar");
+
+    formulario.add(btnAgregar);
+    formulario.add(btnActualizar);
+    formulario.add(btnEliminar);
+
+    panel.add(formulario, BorderLayout.SOUTH);
+
+    // DAO
+    TratamientoDAO dao = new TratamientoDAO();
+
+    // Cargar datos
+    Runnable cargarDatos = () -> {
+        modelo.setRowCount(0);
+        for (Tratamiento t : dao.obtenerTodos()) {
+            modelo.addRow(new Object[]{t.getId(), t.getNombre(), t.getCosto()});
+        }
+    };
+    cargarDatos.run();
+
+    // Evento tabla
+    tabla.getSelectionModel().addListSelectionListener(e -> {
+        int fila = tabla.getSelectedRow();
+        if (fila >= 0) {
+            txtNombre.setText(modelo.getValueAt(fila, 1).toString());
+            txtCosto.setText(modelo.getValueAt(fila, 2).toString());
+        }
+    });
+
+    // Botones
+    btnAgregar.addActionListener(e -> {
+        Tratamiento t = new Tratamiento(txtNombre.getText(), Double.parseDouble(txtCosto.getText()));
+        dao.insertar(t);
+        cargarDatos.run();
+    });
+
+    btnActualizar.addActionListener(e -> {
+        int fila = tabla.getSelectedRow();
+        if (fila >= 0) {
+            int id = (int) modelo.getValueAt(fila, 0);
+            Tratamiento t = new Tratamiento(id, txtNombre.getText(), Double.parseDouble(txtCosto.getText()));
+            dao.actualizar(t);
+            cargarDatos.run();
+        }
+    });
+
+    btnEliminar.addActionListener(e -> {
+        int fila = tabla.getSelectedRow();
+        if (fila >= 0) {
+            int id = (int) modelo.getValueAt(fila, 0);
+            dao.eliminar(id);
+            cargarDatos.run();
+        }
+    });
+
+    return panel;
+}
+
+
 
 
 }
