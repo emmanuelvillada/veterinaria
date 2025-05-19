@@ -11,11 +11,12 @@ public class VeterinarioDAO implements IVeterinarioDAO {
     @Override
     public void insertar(Veterinario veterinario) {
         // Implementación para insertar un veterinario en la base de datos
-        String sql = "INSERT INTO veterinarios (nombre, telefono) VALUES (?, ?)";
+        String sql = "INSERT INTO veterinario (nombre, telefono, especialidad) VALUES (?, ?, ?)";
         try (Connection conn = DB.conectar();
             PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, veterinario.getNombre());
             stmt.setString(2, veterinario.getTelefono());
+            stmt.setString(3, veterinario.getEspecialidad());
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -25,7 +26,7 @@ public class VeterinarioDAO implements IVeterinarioDAO {
     @Override
     public void eliminar(int id) {
         // Implementación para eliminar un veterinario de la base de datos
-        String sql = "DELETE FROM veterinarios WHERE id = ?";
+        String sql = "DELETE FROM veterinario WHERE id = ?";
         try (Connection conn = DB.conectar();
             PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
@@ -38,11 +39,12 @@ public class VeterinarioDAO implements IVeterinarioDAO {
     @Override
     public void actualizar(Veterinario veterinario) {
         // Implementación para actualizar un veterinario en la base de datos
-        String sql = "UPDATE veterinarios SET nombre = ?, telefono = ? WHERE id = ?";
+        String sql = "UPDATE veterinario SET nombre = ?, telefono = ?, especialidad = ? WHERE id = ?";
         try (Connection conn = DB.conectar();
             PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, veterinario.getNombre());
             stmt.setString(2, veterinario.getTelefono());
+            stmt.setString(3, veterinario.getEspecialidad());
             stmt.setInt(3, veterinario.getId()); // Asumiendo que Veterinario tiene un método getId()
             stmt.executeUpdate();
         } catch (SQLException e) {
@@ -52,8 +54,8 @@ public class VeterinarioDAO implements IVeterinarioDAO {
 
     @Override
     public List<Veterinario> obtenerTodos() {
-        // Implementación para obtener todos los veterinarios de la base de datos
-        String sql = "SELECT * FROM veterinarios";
+        // Implementación para obtener todos los veterinario de la base de datos
+        String sql = "SELECT * FROM veterinario";
         List<Veterinario> lista = new ArrayList<>();
         try (Connection conn = DB.conectar();
             PreparedStatement stmt = conn.prepareStatement(sql);

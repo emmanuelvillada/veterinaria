@@ -11,6 +11,18 @@ public class Veterinaria {
     // DAO
     private IMascotaDAO mascotaDAO = new MascotaDAO();
     private IClienteDAO clienteDAO = new ClienteDAO();
+    private IServicioDAO servicioDAO = new ServicioDAO();
+    private IConsultaDAO consultaDAO = new ConsultaDAO();
+private List<Consulta> listaConsultas;
+private JTextField txtIdMascotaConsulta, txtIdVeterinarioConsulta, txtFechaConsulta, txtMotivoConsulta;
+private JTable tableConsultas;
+private DefaultTableModel tableModelConsultas;
+
+    private JTextField txtNombreServicio, txtCostoServicio;
+    private JTable tableServicios;
+    private DefaultTableModel tableModelServicios;
+    private List<Servicio> listaServicios;
+
 
     // Componentes CRUD Mascotas
     private JTextField txtNombreMascota, txtEspecie, txtRaza;
@@ -33,7 +45,7 @@ public class Veterinaria {
 
     public Veterinaria() {
         frame = new JFrame("La Mascota Feliz - Veterinaria");
-        frame.setBounds(100, 100, 850, 600);
+        frame.setBounds(100, 100, 1100, 800);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
 
@@ -45,8 +57,10 @@ public class Veterinaria {
         tabbedPane.addTab("Citas", crearPanelCitas());
         tabbedPane.addTab("Historias Clínicas", crearPanelHistorias());
         tabbedPane.addTab("Tratamientos", crearPanelTratamientos());
-        tabbedPane.setPreferredSize(new Dimension(800, 500));
-
+        tabbedPane.addTab("Servicios", crearPanelServicios());
+        tabbedPane.addTab("Consultas", crearPanelConsultas());
+        tabbedPane.setFont(new Font("Arial", Font.PLAIN, 16));
+        tabbedPane.setPreferredSize(new Dimension(800, 600));
 
         frame.add(tabbedPane, BorderLayout.CENTER);
     }
@@ -365,8 +379,6 @@ private JPanel crearPanelCitas() {
 
     formulario.add(new JLabel("Fecha (YYYY-MM-DD):"));
     formulario.add(txtFecha);
-    formulario.add(new JLabel("Hora (HH:MM):"));
-    formulario.add(txtHora);
     formulario.add(new JLabel("Motivo:"));
     formulario.add(txtMotivo);
     formulario.add(new JLabel("ID Mascota:"));
@@ -466,8 +478,6 @@ private JPanel crearPanelHistorias() {
     formulario.add(txtFecha);
     formulario.add(new JLabel("Diagnóstico:"));
     formulario.add(txtDiagnostico);
-    formulario.add(new JLabel("Tratamiento:"));
-    formulario.add(txtTratamiento);
     formulario.add(new JLabel("ID Mascota:"));
     formulario.add(txtIdMascota);
 
@@ -620,6 +630,182 @@ private JPanel crearPanelTratamientos() {
 
     return panel;
 }
+
+// Panel para servicios
+
+private JPanel crearPanelServicios() {
+    JPanel panel = new JPanel(new BorderLayout());
+
+    listaServicios = servicioDAO.obtenerTodos();
+
+    JPanel form = new JPanel(new GridLayout(3, 2, 5, 5));
+    txtNombreServicio = new JTextField();
+    txtCostoServicio = new JTextField();
+    JButton btnAgregar = new JButton("Agregar");
+    JButton btnActualizar = new JButton("Actualizar");
+    JButton btnEliminar = new JButton("Eliminar");
+
+    form.add(new JLabel("Nombre del servicio:"));
+    form.add(txtNombreServicio);
+    form.add(new JLabel("Costo:"));
+    form.add(txtCostoServicio);
+
+    JPanel botones = new JPanel(new FlowLayout());
+    botones.add(btnAgregar);
+    botones.add(btnActualizar);
+    botones.add(btnEliminar);
+    form.add(botones);
+
+    tableModelServicios = new DefaultTableModel(new String[]{"ID", "Nombre", "Costo"}, 0);
+    tableServicios = new JTable(tableModelServicios);
+    JScrollPane scroll = new JScrollPane(tableServicios);
+
+    panel.add(form, BorderLayout.NORTH);
+    panel.add(scroll, BorderLayout.CENTER);
+
+    btnAgregar.addActionListener(e -> {
+        servicioDAO.insertar(new Servicio(txtNombreServicio.getText(), Double.parseDouble(txtCostoServicio.getText())));
+        cargarDatosServicios();
+    });
+
+    btnActualizar.addActionListener(e -> {
+        int row = tableServicios.getSelectedRow();
+        if (row != -1) {
+            int id = (int) tableModelServicios.getValueAt(row, 0);
+            servicioDAO.actualizar(new Servicio(id, txtNombreServicio.getText(), Double.parseDouble(txtCostoServicio.getText())));
+            cargarDatosServicios();
+        }
+    });
+
+    btnEliminar.addActionListener(e -> {
+        int row = tableServicios.getSelectedRow();
+        if (row != -1) {
+            int id = (int) tableModelServicios.getValueAt(row, 0);
+            servicioDAO.eliminar(id);
+            cargarDatosServicios();
+        }
+    });
+
+    tableServicios.getSelectionModel().addListSelectionListener(e -> {
+        int row = tableServicios.getSelectedRow();
+        if (row >= 0) {
+            txtNombreServicio.setText((String) tableModelServicios.getValueAt(row, 1));
+            txtCostoServicio.setText(String.valueOf(tableModelServicios.getValueAt(row, 2)));
+        }
+    });
+
+    cargarDatosServicios();
+    return panel;
+}
+
+private void cargarDatosServicios() {
+    listaServicios = servicioDAO.obtenerTodos();
+    tableModelServicios.setRowCount(0);
+    for (Servicio s : listaServicios) {
+        tableModelServicios.addRow(new Object[]{s.getId(), s.getNombre(), s.getCosto()});
+    }
+    txtNombreServicio.setText("");
+    txtCostoServicio.setText("");
+}
+
+// Panel para consultas
+
+private JPanel crearPanelConsultas() {
+    JPanel panel = new JPanel(new BorderLayout());
+
+    listaConsultas = consultaDAO.obtenerTodas();
+
+    JPanel form = new JPanel(new GridLayout(5, 2, 5, 5));
+    txtIdMascotaConsulta = new JTextField();
+    txtIdVeterinarioConsulta = new JTextField();
+    txtFechaConsulta = new JTextField();
+    txtMotivoConsulta = new JTextField();
+    JButton btnAgregar = new JButton("Agregar");
+    JButton btnEliminar = new JButton("Eliminar");
+    JButton btnActualizar = new JButton("Actualizar");
+
+    form.add(new JLabel("ID Mascota:"));
+    form.add(txtIdMascotaConsulta);
+    form.add(new JLabel("ID Veterinario:"));
+    form.add(txtIdVeterinarioConsulta);
+    form.add(new JLabel("Fecha (YYYY-MM-DD):"));
+    form.add(txtFechaConsulta);
+    form.add(new JLabel("Motivo:"));
+    form.add(txtMotivoConsulta);
+
+    JPanel botones = new JPanel(new FlowLayout());
+    botones.add(btnAgregar);
+    botones.add(btnActualizar);
+    botones.add(btnEliminar);
+    form.add(botones);
+
+    tableModelConsultas = new DefaultTableModel(new String[]{"ID", "Mascota", "Veterinario", "Fecha", "Motivo"}, 0);
+    tableConsultas = new JTable(tableModelConsultas);
+    JScrollPane scroll = new JScrollPane(tableConsultas);
+
+    panel.add(form, BorderLayout.NORTH);
+    panel.add(scroll, BorderLayout.CENTER);
+
+    btnAgregar.addActionListener(e -> {
+        consultaDAO.insertar(new Consulta(
+            Integer.parseInt(txtIdMascotaConsulta.getText()),
+            Integer.parseInt(txtIdVeterinarioConsulta.getText()),
+            txtFechaConsulta.getText(),
+            txtMotivoConsulta.getText()
+        ));
+        cargarDatosConsultas();
+    });
+
+    btnEliminar.addActionListener(e -> {
+        int row = tableConsultas.getSelectedRow();
+        if (row != -1) {
+            int id = (int) tableModelConsultas.getValueAt(row, 0);
+            consultaDAO.eliminar(id);
+            cargarDatosConsultas();
+        }
+    });
+
+    btnActualizar.addActionListener(e -> {
+        int row = tableConsultas.getSelectedRow();
+        if (row != -1) {
+            int id = (int) tableModelConsultas.getValueAt(row, 0);
+            consultaDAO.actualizar(new Consulta(
+                id,
+                Integer.parseInt(txtIdMascotaConsulta.getText()),
+                Integer.parseInt(txtIdVeterinarioConsulta.getText()),
+                txtFechaConsulta.getText(),
+                txtMotivoConsulta.getText()
+            ));
+            cargarDatosConsultas();
+        }
+    });
+
+    tableConsultas.getSelectionModel().addListSelectionListener(event -> {
+        int row = tableConsultas.getSelectedRow();
+        if (row >= 0) {
+            txtIdMascotaConsulta.setText(String.valueOf(tableModelConsultas.getValueAt(row, 1)));
+            txtIdVeterinarioConsulta.setText(String.valueOf(tableModelConsultas.getValueAt(row, 2)));
+            txtFechaConsulta.setText((String) tableModelConsultas.getValueAt(row, 3));
+            txtMotivoConsulta.setText((String) tableModelConsultas.getValueAt(row, 4));
+        }
+    });
+
+    cargarDatosConsultas();
+    return panel;
+}
+ private void cargarDatosConsultas() {
+    listaConsultas = consultaDAO.obtenerTodas();
+    tableModelConsultas.setRowCount(0);
+    for (Consulta c : listaConsultas) {
+        tableModelConsultas.addRow(new Object[]{c.getId(), c.getIdMascota(), c.getIdVeterinario(), c.getFecha(), c.getMotivo()});
+    }
+    txtIdMascotaConsulta.setText("");
+    txtIdVeterinarioConsulta.setText("");
+    txtFechaConsulta.setText("");
+    txtMotivoConsulta.setText("");
+}
+
+
 
 
 
