@@ -7,4 +7,5 @@ public interface IConsultaDAO {
     void actualizar(Consulta consulta);
     void eliminar(int id);
     List<Consulta> obtenerTodas();
+    List<Consulta> obtenerConsultasPorMascota(String idMascota);
 }
