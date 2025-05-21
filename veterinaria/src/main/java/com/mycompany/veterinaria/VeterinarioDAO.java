@@ -37,20 +37,19 @@ public class VeterinarioDAO implements IVeterinarioDAO {
     }
 
     @Override
-    public void actualizar(Veterinario veterinario) {
-        // Implementación para actualizar un veterinario en la base de datos
-        String sql = "UPDATE veterinario SET nombre = ?, telefono = ?, especialidad = ? WHERE id = ?";
-        try (Connection conn = DB.conectar();
-            PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, veterinario.getNombre());
-            stmt.setString(2, veterinario.getTelefono());
-            stmt.setString(3, veterinario.getEspecialidad());
-            stmt.setInt(3, veterinario.getId()); // Asumiendo que Veterinario tiene un método getId()
-            stmt.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+public void actualizar(Veterinario veterinario) {
+    String sql = "UPDATE veterinario SET nombre = ?, telefono = ?, especialidad = ? WHERE id = ?";
+    try (Connection conn = DB.conectar();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+        stmt.setString(1, veterinario.getNombre());
+        stmt.setString(2, veterinario.getTelefono());
+        stmt.setString(3, veterinario.getEspecialidad());
+        stmt.setInt(4, veterinario.getId());  // CORREGIDO: estaba mal el índice
+        stmt.executeUpdate();
+    } catch (SQLException e) {
+        e.printStackTrace();
     }
+}
 
     @Override
     public List<Veterinario> obtenerTodos() {

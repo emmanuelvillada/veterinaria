@@ -262,42 +262,57 @@ private JTextField txtNombreVeterinario, txtEspecialidad, txtTelefonoVeterinario
 private JTable tableVeterinarios;
 private DefaultTableModel tableModelVeterinarios;
 private List<Veterinario> listaVeterinarios;
-// Crear el panel de veterinario
 private JPanel crearPanelVeterinario() {
-    JPanel panel = new JPanel(new BorderLayout());
+    JPanel panel = new JPanel(new BorderLayout(10, 10));
 
     listaVeterinarios = veterinarioDAO.obtenerTodos();
 
-    // Creamos el formulario con 4 campos ahora
+    // Formulario
     JPanel form = new JPanel(new GridLayout(4, 2, 5, 5));
     txtNombreVeterinario = new JTextField();
     txtEspecialidad = new JTextField();
-    txtTelefonoVeterinario = new JTextField();  // nuevo campo
-    JButton btnAgregar = new JButton("Agregar");
-    JButton btnEliminar = new JButton("Eliminar");
-    JButton btnActualizar = new JButton("Actualizar");
+    txtTelefonoVeterinario = new JTextField();
+
+    form.setBorder(BorderFactory.createTitledBorder("Datos del Veterinario"));
 
     form.add(new JLabel("Nombre:"));
     form.add(txtNombreVeterinario);
     form.add(new JLabel("Especialidad:"));
     form.add(txtEspecialidad);
-    form.add(new JLabel("Teléfono:")); // nuevo label
-    form.add(txtTelefonoVeterinario);      // nuevo campo
+    form.add(new JLabel("Teléfono:"));
+    form.add(txtTelefonoVeterinario);
 
-    JPanel botones = new JPanel(new FlowLayout());
+    // Botones
+    JPanel botones = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+    JButton btnAgregar = new JButton("Agregar");
+    JButton btnActualizar = new JButton("Actualizar");
+    JButton btnEliminar = new JButton("Eliminar");
     botones.add(btnAgregar);
     botones.add(btnActualizar);
     botones.add(btnEliminar);
-    form.add(botones);
 
-    // Agregamos columna Teléfono a la tabla
-    tableModelVeterinarios = new DefaultTableModel(new String[]{"Nombre", "Especialidad", "Teléfono"}, 0);
+    // Tabla
+    tableModelVeterinarios = new DefaultTableModel(new String[]{"ID", "Nombre", "Especialidad", "Teléfono"}, 0) {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false; // para que no se puedan editar directamente
+        }
+    };
     tableVeterinarios = new JTable(tableModelVeterinarios);
+    tableVeterinarios.getColumnModel().getColumn(0).setMinWidth(0);
+    tableVeterinarios.getColumnModel().getColumn(0).setMaxWidth(0); // ocultar columna ID
+
     JScrollPane scroll = new JScrollPane(tableVeterinarios);
 
-    panel.add(form, BorderLayout.NORTH);
+    // Estructura final
+    JPanel top = new JPanel(new BorderLayout());
+    top.add(form, BorderLayout.CENTER);
+    top.add(botones, BorderLayout.SOUTH);
+
+    panel.add(top, BorderLayout.NORTH);
     panel.add(scroll, BorderLayout.CENTER);
 
+    // Eventos
     btnAgregar.addActionListener(e -> {
         veterinarioDAO.insertar(new Veterinario(
                 txtNombreVeterinario.getText(),
@@ -310,13 +325,13 @@ private JPanel crearPanelVeterinario() {
     btnEliminar.addActionListener(e -> {
         int row = tableVeterinarios.getSelectedRow();
         if (row != -1) {
-            String nombre = (String) tableModelVeterinarios.getValueAt(row, 0);
+            int id = (int) tableModelVeterinarios.getValueAt(row, 0);
+            String nombre = (String) tableModelVeterinarios.getValueAt(row, 1);
             int confirm = JOptionPane.showConfirmDialog(frame,
-                    "¿Estás seguro de que quieres eliminar al veterinario \"" + nombre + "\"?",
-                    "Confirmar eliminación",
-                    JOptionPane.YES_NO_OPTION);
+                    "¿Eliminar al veterinario \"" + nombre + "\"?",
+                    "Confirmar eliminación", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
-                veterinarioDAO.eliminar(Integer.parseInt(String.valueOf(tableModelVeterinarios.getValueAt(row, 1))));
+                veterinarioDAO.eliminar(id);
                 cargarDatosVeterinarios();
             }
         }
@@ -325,8 +340,9 @@ private JPanel crearPanelVeterinario() {
     btnActualizar.addActionListener(e -> {
         int row = tableVeterinarios.getSelectedRow();
         if (row != -1) {
+            int id = (int) tableModelVeterinarios.getValueAt(row, 0);
             veterinarioDAO.actualizar(new Veterinario(
-                    Integer.parseInt(String.valueOf(tableModelVeterinarios.getValueAt(row, 1))),
+                    id,
                     txtNombreVeterinario.getText(),
                     txtEspecialidad.getText(),
                     txtTelefonoVeterinario.getText()
@@ -335,30 +351,30 @@ private JPanel crearPanelVeterinario() {
         }
     });
 
-    // Al seleccionar fila, rellenar los campos
     tableVeterinarios.getSelectionModel().addListSelectionListener(event -> {
         int row = tableVeterinarios.getSelectedRow();
         if (row >= 0) {
-            txtNombreVeterinario.setText((String) tableModelVeterinarios.getValueAt(row, 0));
-            txtEspecialidad.setText((String) tableModelVeterinarios.getValueAt(row, 1));
-            txtTelefonoVeterinario.setText((String) tableModelVeterinarios.getValueAt(row, 2));
+            txtNombreVeterinario.setText((String) tableModelVeterinarios.getValueAt(row, 1));
+            txtEspecialidad.setText((String) tableModelVeterinarios.getValueAt(row, 2));
+            txtTelefonoVeterinario.setText((String) tableModelVeterinarios.getValueAt(row, 3));
         }
     });
 
     cargarDatosVeterinarios();
     return panel;
 }
-// Cargar datos de la lista a la tabla
+
 private void cargarDatosVeterinarios() {
     listaVeterinarios = veterinarioDAO.obtenerTodos();
     tableModelVeterinarios.setRowCount(0);
     for (Veterinario v : listaVeterinarios) {
-        tableModelVeterinarios.addRow(new Object[]{v.getNombre(), v.getEspecialidad(), v.getTelefono()});
+        tableModelVeterinarios.addRow(new Object[]{v.getId(), v.getNombre(), v.getEspecialidad(), v.getTelefono()});
     }
     txtNombreVeterinario.setText("");
     txtEspecialidad.setText("");
     txtTelefonoVeterinario.setText("");
 }
+
 //Panel para citas
 private JPanel crearPanelCitas() {
     JPanel panel = new JPanel(new BorderLayout());
@@ -370,21 +386,25 @@ private JPanel crearPanelCitas() {
     panel.add(scroll, BorderLayout.CENTER);
 
     // Panel de formulario
-    JPanel formulario = new JPanel(new GridLayout(6, 2, 5, 5));
-    JTextField txtFecha = new JTextField();
-    JTextField txtHora = new JTextField();
-    JTextField txtMotivo = new JTextField();
-    JTextField txtIdMascota = new JTextField();
-    JTextField txtIdVeterinario = new JTextField();
+    JPanel formulario = new JPanel(new GridLayout(4, 4, 10, 5));
+    JTextField txtFecha = new JTextField(10);
+    JTextField txtHora = new JTextField(10);
+    JTextField txtMotivo = new JTextField(10);
+    JTextField txtIdMascota = new JTextField(10);
+    JTextField txtIdVeterinario = new JTextField(10);
 
     formulario.add(new JLabel("Fecha (YYYY-MM-DD):"));
     formulario.add(txtFecha);
+    formulario.add(new JLabel("Hora (HH:MM):"));
+    formulario.add(txtHora);
     formulario.add(new JLabel("Motivo:"));
     formulario.add(txtMotivo);
     formulario.add(new JLabel("ID Mascota:"));
     formulario.add(txtIdMascota);
     formulario.add(new JLabel("ID Veterinario:"));
     formulario.add(txtIdVeterinario);
+    formulario.add(new JLabel("")); // Espacio vacío
+    formulario.add(new JLabel("")); // Espacio vacío
 
     JButton btnAgregar = new JButton("Agregar");
     JButton btnActualizar = new JButton("Actualizar");
@@ -422,29 +442,38 @@ private JPanel crearPanelCitas() {
         }
     });
 
-    // Eventos botones
+    // Botón Agregar
     btnAgregar.addActionListener(e -> {
         Cita c = new Cita(
-            txtFecha.getText(), txtHora.getText(), txtMotivo.getText(),
-            Integer.parseInt(txtIdMascota.getText()), Integer.parseInt(txtIdVeterinario.getText())
+            txtFecha.getText(),
+            txtHora.getText(),
+            txtMotivo.getText(),
+            Integer.parseInt(txtIdMascota.getText()),
+            Integer.parseInt(txtIdVeterinario.getText())
         );
         dao.insertar(c);
         cargarDatos.run();
     });
 
+    // Botón Actualizar
     btnActualizar.addActionListener(e -> {
         int fila = tabla.getSelectedRow();
         if (fila >= 0) {
             int id = (int) modelo.getValueAt(fila, 0);
             Cita c = new Cita(
-                id, txtFecha.getText(), txtHora.getText(), txtMotivo.getText(),
-                Integer.parseInt(txtIdMascota.getText()), Integer.parseInt(txtIdVeterinario.getText())
+                id,
+                txtFecha.getText(),
+                txtHora.getText(),
+                txtMotivo.getText(),
+                Integer.parseInt(txtIdMascota.getText()),
+                Integer.parseInt(txtIdVeterinario.getText())
             );
             dao.actualizar(c);
             cargarDatos.run();
         }
     });
 
+    // Botón Eliminar
     btnEliminar.addActionListener(e -> {
         int fila = tabla.getSelectedRow();
         if (fila >= 0) {
@@ -456,6 +485,7 @@ private JPanel crearPanelCitas() {
 
     return panel;
 }
+
 //panel para historia clinica
 
 private JPanel crearPanelHistorias() {
@@ -468,18 +498,24 @@ private JPanel crearPanelHistorias() {
     panel.add(scroll, BorderLayout.CENTER);
 
     // Panel de formulario
-    JPanel formulario = new JPanel(new GridLayout(5, 2, 5, 5));
-    JTextField txtFecha = new JTextField();
-    JTextField txtDiagnostico = new JTextField();
-    JTextField txtTratamiento = new JTextField();
-    JTextField txtIdMascota = new JTextField();
+    JPanel formulario = new JPanel(new GridLayout(5, 2, 10, 10));
+    JTextField txtFecha = new JTextField(10);
+    JTextField txtDiagnostico = new JTextField(10);
+    JTextField txtTratamiento = new JTextField(10);
+    JTextField txtIdMascota = new JTextField(10);
 
     formulario.add(new JLabel("Fecha (YYYY-MM-DD):"));
     formulario.add(txtFecha);
+    formulario.add(new JLabel("")); // Espacio vacío
     formulario.add(new JLabel("Diagnóstico:"));
     formulario.add(txtDiagnostico);
+        formulario.add(new JLabel("")); // Espacio vacío
+    formulario.add(new JLabel("Tratamiento:"));
+    formulario.add(txtTratamiento);
+        formulario.add(new JLabel("")); // Espacio vacío
     formulario.add(new JLabel("ID Mascota:"));
     formulario.add(txtIdMascota);
+    formulario.add(new JLabel("")); // Espacio vacío
 
     JButton btnAgregar = new JButton("Agregar");
     JButton btnActualizar = new JButton("Actualizar");
@@ -550,7 +586,7 @@ private JPanel crearPanelHistorias() {
 
     return panel;
 }
-// Pnael para tratamiento
+// Panel para tratamiento
 
 private JPanel crearPanelTratamientos() {
     JPanel panel = new JPanel(new BorderLayout());
@@ -562,13 +598,13 @@ private JPanel crearPanelTratamientos() {
     panel.add(scroll, BorderLayout.CENTER);
 
     // Formulario
-    JPanel formulario = new JPanel(new GridLayout(3, 2, 5, 5));
-    JTextField txtNombre = new JTextField();
-    JTextField txtCosto = new JTextField();
+        JPanel formulario = new JPanel(new GridLayout(2, 2, 5, 5));
+    JTextField txtNombre = new JTextField(10);
+    JTextField txtCosto = new JTextField(10);
 
     formulario.add(new JLabel("Nombre:"));
     formulario.add(txtNombre);
-    formulario.add(new JLabel("Costo:"));
+        formulario.add(new JLabel("Costo:"));
     formulario.add(txtCosto);
 
     JButton btnAgregar = new JButton("Agregar");
@@ -631,73 +667,93 @@ private JPanel crearPanelTratamientos() {
     return panel;
 }
 
-// Panel para servicios
-
 private JPanel crearPanelServicios() {
     JPanel panel = new JPanel(new BorderLayout());
 
-    listaServicios = servicioDAO.obtenerTodos();
+    // Tabla y modelo
+    tableModelServicios = new DefaultTableModel(new String[]{"ID", "Nombre", "Costo"}, 0);
+    tableServicios = new JTable(tableModelServicios);
+    JScrollPane scroll = new JScrollPane(tableServicios);
+    panel.add(scroll, BorderLayout.CENTER);
 
-    JPanel form = new JPanel(new GridLayout(3, 2, 5, 5));
-    txtNombreServicio = new JTextField();
-    txtCostoServicio = new JTextField();
+    // Formulario
+    JPanel formulario = new JPanel(new GridLayout(2, 2, 5, 5));
+    txtNombreServicio = new JTextField(10);
+    txtCostoServicio = new JTextField(10);
+
+    formulario.add(new JLabel("Nombre del servicio:"));
+    formulario.add(txtNombreServicio);
+    formulario.add(new JLabel("Costo:"));
+    formulario.add(txtCostoServicio);
+
+    // Botones
     JButton btnAgregar = new JButton("Agregar");
     JButton btnActualizar = new JButton("Actualizar");
     JButton btnEliminar = new JButton("Eliminar");
-
-    form.add(new JLabel("Nombre del servicio:"));
-    form.add(txtNombreServicio);
-    form.add(new JLabel("Costo:"));
-    form.add(txtCostoServicio);
 
     JPanel botones = new JPanel(new FlowLayout());
     botones.add(btnAgregar);
     botones.add(btnActualizar);
     botones.add(btnEliminar);
-    form.add(botones);
 
-    tableModelServicios = new DefaultTableModel(new String[]{"ID", "Nombre", "Costo"}, 0);
-    tableServicios = new JTable(tableModelServicios);
-    JScrollPane scroll = new JScrollPane(tableServicios);
+    // Panel inferior
+    JPanel sur = new JPanel(new BorderLayout());
+    sur.add(formulario, BorderLayout.CENTER);
+    sur.add(botones, BorderLayout.SOUTH);
 
-    panel.add(form, BorderLayout.NORTH);
-    panel.add(scroll, BorderLayout.CENTER);
+    panel.add(sur, BorderLayout.SOUTH);
 
+    // DAO
+    servicioDAO = new ServicioDAO();  // Asegúrate de inicializarlo si no lo tienes arriba
+
+    // Cargar datos
+    cargarDatosServicios();
+
+    // Eventos tabla
+    tableServicios.getSelectionModel().addListSelectionListener(e -> {
+        int row = tableServicios.getSelectedRow();
+        if (row >= 0) {
+            txtNombreServicio.setText(tableModelServicios.getValueAt(row, 1).toString());
+            txtCostoServicio.setText(tableModelServicios.getValueAt(row, 2).toString());
+        }
+    });
+
+    // Botones
     btnAgregar.addActionListener(e -> {
-        servicioDAO.insertar(new Servicio(txtNombreServicio.getText(), Double.parseDouble(txtCostoServicio.getText())));
-        cargarDatosServicios();
+        try {
+            Servicio s = new Servicio(txtNombreServicio.getText(), Double.parseDouble(txtCostoServicio.getText()));
+            servicioDAO.insertar(s);
+            cargarDatosServicios();
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(panel, "El costo debe ser un número.");
+        }
     });
 
     btnActualizar.addActionListener(e -> {
         int row = tableServicios.getSelectedRow();
-        if (row != -1) {
-            int id = (int) tableModelServicios.getValueAt(row, 0);
-            servicioDAO.actualizar(new Servicio(id, txtNombreServicio.getText(), Double.parseDouble(txtCostoServicio.getText())));
-            cargarDatosServicios();
+        if (row >= 0) {
+            try {
+                int id = (int) tableModelServicios.getValueAt(row, 0);
+                Servicio s = new Servicio(id, txtNombreServicio.getText(), Double.parseDouble(txtCostoServicio.getText()));
+                servicioDAO.actualizar(s);
+                cargarDatosServicios();
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(panel, "El costo debe ser un número.");
+            }
         }
     });
 
     btnEliminar.addActionListener(e -> {
         int row = tableServicios.getSelectedRow();
-        if (row != -1) {
+        if (row >= 0) {
             int id = (int) tableModelServicios.getValueAt(row, 0);
             servicioDAO.eliminar(id);
             cargarDatosServicios();
         }
     });
 
-    tableServicios.getSelectionModel().addListSelectionListener(e -> {
-        int row = tableServicios.getSelectedRow();
-        if (row >= 0) {
-            txtNombreServicio.setText((String) tableModelServicios.getValueAt(row, 1));
-            txtCostoServicio.setText(String.valueOf(tableModelServicios.getValueAt(row, 2)));
-        }
-    });
-
-    cargarDatosServicios();
     return panel;
 }
-
 private void cargarDatosServicios() {
     listaServicios = servicioDAO.obtenerTodos();
     tableModelServicios.setRowCount(0);
@@ -708,96 +764,122 @@ private void cargarDatosServicios() {
     txtCostoServicio.setText("");
 }
 
-// Panel para consultas
-
 private JPanel crearPanelConsultas() {
     JPanel panel = new JPanel(new BorderLayout());
 
-    listaConsultas = consultaDAO.obtenerTodas();
+    // Tabla y modelo
+    tableModelConsultas = new DefaultTableModel(new String[]{"ID", "Mascota", "Veterinario", "Fecha", "Motivo"}, 0);
+    tableConsultas = new JTable(tableModelConsultas);
+    JScrollPane scroll = new JScrollPane(tableConsultas);
+    panel.add(scroll, BorderLayout.CENTER);
 
-    JPanel form = new JPanel(new GridLayout(5, 2, 5, 5));
-    txtIdMascotaConsulta = new JTextField();
-    txtIdVeterinarioConsulta = new JTextField();
-    txtFechaConsulta = new JTextField();
-    txtMotivoConsulta = new JTextField();
+    // Formulario
+    JPanel formulario = new JPanel(new GridLayout(4, 2, 5, 5));
+    txtIdMascotaConsulta = new JTextField(10);
+    txtIdVeterinarioConsulta = new JTextField(10);
+    txtFechaConsulta = new JTextField(10);
+    txtMotivoConsulta = new JTextField(10);
+
+    formulario.add(new JLabel("ID Mascota:"));
+    formulario.add(txtIdMascotaConsulta);
+    formulario.add(new JLabel("ID Veterinario:"));
+    formulario.add(txtIdVeterinarioConsulta);
+    formulario.add(new JLabel("Fecha (YYYY-MM-DD):"));
+    formulario.add(txtFechaConsulta);
+    formulario.add(new JLabel("Motivo:"));
+    formulario.add(txtMotivoConsulta);
+
+    // Botones
     JButton btnAgregar = new JButton("Agregar");
-    JButton btnEliminar = new JButton("Eliminar");
     JButton btnActualizar = new JButton("Actualizar");
-
-    form.add(new JLabel("ID Mascota:"));
-    form.add(txtIdMascotaConsulta);
-    form.add(new JLabel("ID Veterinario:"));
-    form.add(txtIdVeterinarioConsulta);
-    form.add(new JLabel("Fecha (YYYY-MM-DD):"));
-    form.add(txtFechaConsulta);
-    form.add(new JLabel("Motivo:"));
-    form.add(txtMotivoConsulta);
+    JButton btnEliminar = new JButton("Eliminar");
 
     JPanel botones = new JPanel(new FlowLayout());
     botones.add(btnAgregar);
     botones.add(btnActualizar);
     botones.add(btnEliminar);
-    form.add(botones);
 
-    tableModelConsultas = new DefaultTableModel(new String[]{"ID", "Mascota", "Veterinario", "Fecha", "Motivo"}, 0);
-    tableConsultas = new JTable(tableModelConsultas);
-    JScrollPane scroll = new JScrollPane(tableConsultas);
+    // Panel inferior que junta formulario y botones
+    JPanel sur = new JPanel(new BorderLayout());
+    sur.add(formulario, BorderLayout.CENTER);
+    sur.add(botones, BorderLayout.SOUTH);
+    panel.add(sur, BorderLayout.SOUTH);
 
-    panel.add(form, BorderLayout.NORTH);
-    panel.add(scroll, BorderLayout.CENTER);
+    // DAO
+    consultaDAO = new ConsultaDAO();  // Asegúrate que esté inicializado
 
+    // Cargar datos iniciales
+    cargarDatosConsultas();
+
+    // Acciones de los botones
     btnAgregar.addActionListener(e -> {
-        consultaDAO.insertar(new Consulta(
-            Integer.parseInt(txtIdMascotaConsulta.getText()),
-            Integer.parseInt(txtIdVeterinarioConsulta.getText()),
-            txtFechaConsulta.getText(),
-            txtMotivoConsulta.getText()
-        ));
-        cargarDatosConsultas();
+        try {
+            Consulta c = new Consulta(
+                Integer.parseInt(txtIdMascotaConsulta.getText()),
+                Integer.parseInt(txtIdVeterinarioConsulta.getText()),
+                txtFechaConsulta.getText(),
+                txtMotivoConsulta.getText()
+            );
+            consultaDAO.insertar(c);
+            cargarDatosConsultas();
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(panel, "Los campos ID deben ser números.");
+        }
+    });
+
+    btnActualizar.addActionListener(e -> {
+        int row = tableConsultas.getSelectedRow();
+        if (row >= 0) {
+            try {
+                int id = (int) tableModelConsultas.getValueAt(row, 0);
+                Consulta c = new Consulta(
+                    id,
+                    Integer.parseInt(txtIdMascotaConsulta.getText()),
+                    Integer.parseInt(txtIdVeterinarioConsulta.getText()),
+                    txtFechaConsulta.getText(),
+                    txtMotivoConsulta.getText()
+                );
+                consultaDAO.actualizar(c);
+                cargarDatosConsultas();
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(panel, "Los campos ID deben ser números.");
+            }
+        }
     });
 
     btnEliminar.addActionListener(e -> {
         int row = tableConsultas.getSelectedRow();
-        if (row != -1) {
+        if (row >= 0) {
             int id = (int) tableModelConsultas.getValueAt(row, 0);
             consultaDAO.eliminar(id);
             cargarDatosConsultas();
         }
     });
 
-    btnActualizar.addActionListener(e -> {
-        int row = tableConsultas.getSelectedRow();
-        if (row != -1) {
-            int id = (int) tableModelConsultas.getValueAt(row, 0);
-            consultaDAO.actualizar(new Consulta(
-                id,
-                Integer.parseInt(txtIdMascotaConsulta.getText()),
-                Integer.parseInt(txtIdVeterinarioConsulta.getText()),
-                txtFechaConsulta.getText(),
-                txtMotivoConsulta.getText()
-            ));
-            cargarDatosConsultas();
-        }
-    });
-
-    tableConsultas.getSelectionModel().addListSelectionListener(event -> {
+    // Selección en la tabla
+    tableConsultas.getSelectionModel().addListSelectionListener(e -> {
         int row = tableConsultas.getSelectedRow();
         if (row >= 0) {
-            txtIdMascotaConsulta.setText(String.valueOf(tableModelConsultas.getValueAt(row, 1)));
-            txtIdVeterinarioConsulta.setText(String.valueOf(tableModelConsultas.getValueAt(row, 2)));
-            txtFechaConsulta.setText((String) tableModelConsultas.getValueAt(row, 3));
-            txtMotivoConsulta.setText((String) tableModelConsultas.getValueAt(row, 4));
+            txtIdMascotaConsulta.setText(tableModelConsultas.getValueAt(row, 1).toString());
+            txtIdVeterinarioConsulta.setText(tableModelConsultas.getValueAt(row, 2).toString());
+            txtFechaConsulta.setText(tableModelConsultas.getValueAt(row, 3).toString());
+            txtMotivoConsulta.setText(tableModelConsultas.getValueAt(row, 4).toString());
         }
     });
 
-    cargarDatosConsultas();
     return panel;
 }
- private void cargarDatosConsultas() {
+private void cargarDatosConsultas() {
     listaConsultas = consultaDAO.obtenerTodas();
     tableModelConsultas.setRowCount(0);
     for (Consulta c : listaConsultas) {
-        tableModelConsultas.addRow(new Object[]{c.getId(), c.getIdMascota(), c.getIdVeterinario(), c.getFecha(), c.getMotivo()});
+        tableModelConsultas.addRow(new Object[]{
+            c.getId(),
+            c.getIdMascota(),
+            c.getIdVeterinario(),
+            c.getFecha(),
+            c.getMotivo()
+        });
     }
     txtIdMascotaConsulta.setText("");
     txtIdVeterinarioConsulta.setText("");

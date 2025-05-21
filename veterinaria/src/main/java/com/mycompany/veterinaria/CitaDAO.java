@@ -1,16 +1,15 @@
 package com.mycompany.veterinaria;
 
 import java.sql.*;
-import java.util.*;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class CitaDAO implements ICitaDAO {
     private final Connection conn;
 
     public CitaDAO() {
         try {
-            conn = DB.conectar(); // Asumiendo que tienes clase de conexión
+            conn = DB.conectar(); // Asegúrate de tener implementada la clase DB con un método conectar()
         } catch (SQLException e) {
             throw new RuntimeException("Error al conectar con la base de datos", e);
         }
@@ -35,7 +34,7 @@ public class CitaDAO implements ICitaDAO {
     public void actualizar(Cita c) {
         try {
             PreparedStatement ps = conn.prepareStatement(
-                "UPDATE cita SET fecha=?, hora=?, motivo=?, id_mascota=?, id_veterinario=? WHERE id=?"
+                "UPDATE cita SET fecha = ?, hora = ?, motivo = ?, id_mascota = ?, id_veterinario = ? WHERE id = ?"
             );
             ps.setString(1, c.getFecha());
             ps.setString(2, c.getHora());
@@ -63,7 +62,7 @@ public class CitaDAO implements ICitaDAO {
         List<Cita> lista = new ArrayList<>();
         try {
             Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM cita");
+            ResultSet rs = stmt.executeQuery("SELECT * FROM cita ORDER BY fecha, hora");
             while (rs.next()) {
                 lista.add(new Cita(
                     rs.getInt("id"),
@@ -80,4 +79,3 @@ public class CitaDAO implements ICitaDAO {
         return lista;
     }
 }
-
